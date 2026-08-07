@@ -1,0 +1,36 @@
+{
+  "name": "archive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "scan:secrets": "node scripts/scan-secrets.mjs --all",
+    "scan:secrets:history": "node scripts/scan-secrets.mjs --history",
+    "db:generate": "pnpm --filter @archive/db generate",
+    "db:migrate": "pnpm --filter @archive/db migrate",
+    "reparse": "tsx scripts/reparse.ts"
+  },
+  "devDependencies": {
+    "@archive/config": "workspace:*",
+    "@archive/parser": "workspace:*",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.9",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^4.1.10"
+  }
+}

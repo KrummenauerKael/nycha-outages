@@ -1,0 +1,15 @@
+#!/bin/sh
+# Installed by `pnpm install` (the "prepare" script points core.hooksPath here).
+# Install by hand with: git config core.hooksPath .githooks
+#
+# Blocks a commit that carries credentials. The repo is public; see SECURITY.md.
+# Bypass with `git commit --no-verify` only when you have looked at the finding
+# and know it is a false positive.
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: node not found — secret scan skipped." >&2
+  echo "pre-commit: install Node 24+ or run 'node scripts/scan-secrets.mjs' manually." >&2
+  exit 0
+fi
+
+exec node "$(git rev-parse --show-toplevel)/scripts/scan-secrets.mjs" --staged

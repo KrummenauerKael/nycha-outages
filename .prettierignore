@@ -1,0 +1,5 @@
+node_modules
+dist
+pnpm-lock.yaml
+packages/parser/test/fixtures
+packages/db/drizzle

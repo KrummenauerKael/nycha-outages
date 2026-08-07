@@ -1,0 +1,32 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Secrets — never commit. See .env.example for the required names and
+# SECURITY.md for what to do if one lands in a commit anyway.
+.env
+.env.*
+!.env.example
+.envrc
+
+# Key material. Nothing in this project needs a key file on disk; if one shows
+# up it arrived by accident.
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+id_rsa
+id_ed25519
+service-account*.json
+
+.vercel/
+coverage/
+.DS_Store
+
+# Local scratch output from scripts/ (fetched pages, reparse dumps)
+tmp/
+
+# Personal Claude Code settings — local only, never committed.
+.claude/settings.local.json
+.claude/settings.json
