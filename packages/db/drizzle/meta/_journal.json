@@ -8,6 +8,13 @@
       "when": 1786114642377,
       "tag": "0000_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786141510077,
+      "tag": "0001_harden_grants",
+      "breakpoints": true
     }
   ]
 }

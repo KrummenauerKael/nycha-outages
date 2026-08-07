@@ -1,0 +1,1015 @@
+{
+  "id": "6a25a226-39ca-4bdb-9db8-9af7f1084617",
+  "prevId": "c26d63e6-46f9-40d3-a360-722dc25d08f6",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.category_summary": {
+      "name": "category_summary",
+      "schema": "",
+      "columns": {
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_planned": {
+          "name": "is_planned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "as_of_raw": {
+          "name": "as_of_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "interruptions": {
+          "name": "interruptions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "developments": {
+          "name": "developments",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "buildings": {
+          "name": "buildings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "units": {
+          "name": "units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "residents": {
+          "name": "residents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "category_summary_snapshot_id_snapshot_id_fk": {
+          "name": "category_summary_snapshot_id_snapshot_id_fk",
+          "tableFrom": "category_summary",
+          "columnsFrom": [
+            "snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "category_summary_snapshot_id_category_is_planned_pk": {
+          "name": "category_summary_snapshot_id_category_is_planned_pk",
+          "columns": [
+            "snapshot_id",
+            "category",
+            "is_planned"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "category_summary_category_check": {
+          "name": "category_summary_category_check",
+          "value": "\"category\" in ('heat_hot_water', 'elevator', 'electric', 'gas')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.observation_child": {
+      "name": "observation_child",
+      "schema": "",
+      "columns": {
+        "observation_id": {
+          "name": "observation_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "building_raw": {
+          "name": "building_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_raw": {
+          "name": "address_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "buildings": {
+          "name": "buildings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "units": {
+          "name": "units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "residents": {
+          "name": "residents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "observation_child_observation_id_outage_observation_id_fk": {
+          "name": "observation_child_observation_id_outage_observation_id_fk",
+          "tableFrom": "observation_child",
+          "columnsFrom": [
+            "observation_id"
+          ],
+          "tableTo": "outage_observation",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "observation_child_observation_id_ordinal_pk": {
+          "name": "observation_child_observation_id_ordinal_pk",
+          "columns": [
+            "observation_id",
+            "ordinal"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.observation_service": {
+      "name": "observation_service",
+      "schema": "",
+      "columns": {
+        "observation_id": {
+          "name": "observation_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service": {
+          "name": "service",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_planned": {
+          "name": "is_planned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_partial_service": {
+          "name": "is_partial_service",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "observation_service_service_idx": {
+          "name": "observation_service_service_idx",
+          "columns": [
+            {
+              "expression": "service",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "observation_service_observation_id_outage_observation_id_fk": {
+          "name": "observation_service_observation_id_outage_observation_id_fk",
+          "tableFrom": "observation_service",
+          "columnsFrom": [
+            "observation_id"
+          ],
+          "tableTo": "outage_observation",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "observation_service_observation_id_service_pk": {
+          "name": "observation_service_observation_id_service_pk",
+          "columns": [
+            "observation_id",
+            "service"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "observation_service_service_check": {
+          "name": "observation_service_service_check",
+          "value": "\"service\" in ('heat', 'hot_water', 'water', 'elevator', 'electric', 'gas')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.outage_event": {
+      "name": "outage_event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identity_hash": {
+          "name": "identity_hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sub_table": {
+          "name": "sub_table",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "development_raw": {
+          "name": "development_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "building_raw": {
+          "name": "building_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_raw": {
+          "name": "address_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "borough_raw": {
+          "name": "borough_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scheduled_date_raw": {
+          "name": "scheduled_date_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "report_date_raw": {
+          "name": "report_date_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_level": {
+          "name": "scope_level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_sectional": {
+          "name": "is_sectional",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "services_key": {
+          "name": "services_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_seen_snapshot_id": {
+          "name": "first_seen_snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_seen_at": {
+          "name": "first_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen_snapshot_id": {
+          "name": "last_seen_snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "outage_event_identity_hash_key": {
+          "name": "outage_event_identity_hash_key",
+          "columns": [
+            {
+              "expression": "identity_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "outage_event_place_idx": {
+          "name": "outage_event_place_idx",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "development_raw",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "building_raw",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "outage_event_last_seen_idx": {
+          "name": "outage_event_last_seen_idx",
+          "columns": [
+            {
+              "expression": "last_seen_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "outage_event_first_seen_snapshot_id_snapshot_id_fk": {
+          "name": "outage_event_first_seen_snapshot_id_snapshot_id_fk",
+          "tableFrom": "outage_event",
+          "columnsFrom": [
+            "first_seen_snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "outage_event_last_seen_snapshot_id_snapshot_id_fk": {
+          "name": "outage_event_last_seen_snapshot_id_snapshot_id_fk",
+          "tableFrom": "outage_event",
+          "columnsFrom": [
+            "last_seen_snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "outage_event_category_check": {
+          "name": "outage_event_category_check",
+          "value": "\"category\" in ('heat_hot_water', 'elevator', 'electric', 'gas')"
+        },
+        "outage_event_sub_table_check": {
+          "name": "outage_event_sub_table_check",
+          "value": "\"sub_table\" in ('current', 'restored_24h', 'upcoming_planned', 'rehab', 'gas_current')"
+        },
+        "outage_event_scope_level_check": {
+          "name": "outage_event_scope_level_check",
+          "value": "\"scope_level\" in ('entire_development', 'building', 'sectional', 'unspecified')"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.outage_observation": {
+      "name": "outage_observation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_present": {
+          "name": "is_present",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "first_seen_snapshot_id": {
+          "name": "first_seen_snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_seen_at": {
+          "name": "first_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen_snapshot_id": {
+          "name": "last_seen_snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_displayed": {
+          "name": "address_displayed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restoration_hours": {
+          "name": "restoration_hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location_raw": {
+          "name": "location_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impact_buildings": {
+          "name": "impact_buildings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impact_units": {
+          "name": "impact_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impact_residents": {
+          "name": "impact_residents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impact_source": {
+          "name": "impact_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "row_index": {
+          "name": "row_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parser_version": {
+          "name": "parser_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "outage_observation_event_idx": {
+          "name": "outage_observation_event_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "first_seen_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "outage_observation_event_content_idx": {
+          "name": "outage_observation_event_content_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "first_seen_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "outage_observation_present_idx": {
+          "name": "outage_observation_present_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"outage_observation\".\"is_present\"",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "outage_observation_event_id_outage_event_id_fk": {
+          "name": "outage_observation_event_id_outage_event_id_fk",
+          "tableFrom": "outage_observation",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "tableTo": "outage_event",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "outage_observation_first_seen_snapshot_id_snapshot_id_fk": {
+          "name": "outage_observation_first_seen_snapshot_id_snapshot_id_fk",
+          "tableFrom": "outage_observation",
+          "columnsFrom": [
+            "first_seen_snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "outage_observation_last_seen_snapshot_id_snapshot_id_fk": {
+          "name": "outage_observation_last_seen_snapshot_id_snapshot_id_fk",
+          "tableFrom": "outage_observation",
+          "columnsFrom": [
+            "last_seen_snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "outage_observation_impact_source_check": {
+          "name": "outage_observation_impact_source_check",
+          "value": "\"impact_source\" in ('row', 'children_rollup', 'missing')"
+        },
+        "outage_observation_restoration_hours_check": {
+          "name": "outage_observation_restoration_hours_check",
+          "value": "\"restoration_hours\" >= 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.review_queue": {
+      "name": "review_queue",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "review_queue_unresolved_idx": {
+          "name": "review_queue_unresolved_idx",
+          "columns": [
+            {
+              "expression": "snapshot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"review_queue\".\"resolved_at\" is null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "review_queue_snapshot_id_snapshot_id_fk": {
+          "name": "review_queue_snapshot_id_snapshot_id_fk",
+          "tableFrom": "review_queue",
+          "columnsFrom": [
+            "snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.snapshot": {
+      "name": "snapshot",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "http_status": {
+          "name": "http_status",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_key": {
+          "name": "storage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stored_bytes": {
+          "name": "stored_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retain_until": {
+          "name": "retain_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw_discarded_at": {
+          "name": "raw_discarded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counts_matched": {
+          "name": "counts_matched",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parser_version": {
+          "name": "parser_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "snapshot_fetched_at_idx": {
+          "name": "snapshot_fetched_at_idx",
+          "columns": [
+            {
+              "expression": "fetched_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "snapshot_sha256_idx": {
+          "name": "snapshot_sha256_idx",
+          "columns": [
+            {
+              "expression": "sha256",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "snapshot_sweep_idx": {
+          "name": "snapshot_sweep_idx",
+          "columns": [
+            {
+              "expression": "retain_until",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "where": "\"snapshot\".\"raw_discarded_at\" is null and \"snapshot\".\"retain_until\" is not null",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.snapshot_count": {
+      "name": "snapshot_count",
+      "schema": "",
+      "columns": {
+        "snapshot_id": {
+          "name": "snapshot_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sub_table": {
+          "name": "sub_table",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "declared": {
+          "name": "declared",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parsed": {
+          "name": "parsed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "snapshot_count_snapshot_id_snapshot_id_fk": {
+          "name": "snapshot_count_snapshot_id_snapshot_id_fk",
+          "tableFrom": "snapshot_count",
+          "columnsFrom": [
+            "snapshot_id"
+          ],
+          "tableTo": "snapshot",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "snapshot_count_snapshot_id_category_sub_table_pk": {
+          "name": "snapshot_count_snapshot_id_category_sub_table_pk",
+          "columns": [
+            "snapshot_id",
+            "category",
+            "sub_table"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "snapshot_count_category_check": {
+          "name": "snapshot_count_category_check",
+          "value": "\"category\" in ('heat_hot_water', 'elevator', 'electric', 'gas')"
+        },
+        "snapshot_count_sub_table_check": {
+          "name": "snapshot_count_sub_table_check",
+          "value": "\"sub_table\" in ('current', 'restored_24h', 'upcoming_planned', 'rehab', 'gas_current')"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

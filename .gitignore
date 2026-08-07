@@ -21,6 +21,9 @@ id_ed25519
 service-account*.json
 
 .vercel/
+# Supabase CLI scratch (linked-project cache, version check). Not config —
+# supabase/config.toml, if we ever add one, is meant to be committed.
+supabase/.temp/
 coverage/
 .DS_Store
 
