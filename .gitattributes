@@ -1,0 +1,29 @@
+# Git for Windows ships core.autocrlf=true in its system config, which checks
+# every file out with CRLF. Prettier defaults to endOfLine "lf", so on a Windows
+# clone `pnpm format:check` failed on all 31 tracked files while CI on Linux
+# passed — a difference that has nothing to do with the code.
+#
+# Normalise to LF in the index AND in the working tree on every platform, so the
+# formatter, the parser fixtures, and the sha256 of anything read off disk behave
+# identically everywhere.
+* text=auto eol=lf
+
+# The parser fixture is pinned to LF explicitly rather than marked -text.
+#
+# It is a capture of NYCHA's response, so byte-exactness would be preferable in
+# principle. That guarantee is already gone: the first commit of this repo was
+# made on Windows under core.autocrlf=true, which stripped 24,962 CRs on the way
+# into the index, and the previous repository (which held the untouched capture)
+# has been deleted. Whether the origin served CRLF or LF can no longer be
+# established from anything we still have.
+#
+# So it is pinned to what the index actually contains, LF, which keeps it stable
+# and diff-free on every platform. Restoring CRs from the working copy would be a
+# 25 KB rewrite of archived evidence on the strength of a guess about IIS.
+#
+# This does not affect the archive itself: collected snapshots go to Supabase
+# Storage as gzipped bytes and never pass through git or a checkout filter.
+packages/parser/test/fixtures/*.html text eol=lf -diff
+
+# Lockfile: LF like everything else, but keep it out of diffs where possible.
+pnpm-lock.yaml -diff linguist-generated
