@@ -57,6 +57,21 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
 
+  packages/ingest:
+    dependencies:
+      '@archive/config':
+        specifier: workspace:*
+        version: link:../config
+      '@archive/db':
+        specifier: workspace:*
+        version: link:../db
+      '@archive/parser':
+        specifier: workspace:*
+        version: link:../parser
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(postgres@3.4.9)
+
   packages/parser:
     dependencies:
       '@archive/config':
