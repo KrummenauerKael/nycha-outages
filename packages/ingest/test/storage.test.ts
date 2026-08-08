@@ -7,7 +7,7 @@ import {
   storageKeyFor,
   uploadSnapshot,
   type StorageConfig,
-} from '../src/storage.js';
+} from '../src/storage';
 
 const SHA = 'a'.repeat(64);
 const CONFIG: StorageConfig = {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { checkAuth } from '../src/auth.js';
-import type { CronRequest } from '../src/http.js';
+import { checkAuth } from '../src/auth';
+import type { CronRequest } from '../src/http';
 
 const SECRET = 'test-secret';
 

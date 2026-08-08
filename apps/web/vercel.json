@@ -1,15 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm build",
   "crons": [
     {
       "path": "/api/ingest",
       "schedule": "0 * * * *"
     }
-  ],
-  "functions": {
-    "api/ingest.js": {
-      "maxDuration": 60
-    }
-  }
+  ]
 }

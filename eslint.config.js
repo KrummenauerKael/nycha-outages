@@ -8,8 +8,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/.vercel/**',
       '**/test/fixtures/**',
-      // Generated bundle, not authored source. See apps/ingest/src/entry.ts.
-      'apps/ingest/api/**',
+      '**/.next/**',
     ],
   },
   js.configs.recommended,

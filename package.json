@@ -9,6 +9,8 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
+    "build": "pnpm --filter @archive/web build",
+    "dev": "pnpm --filter @archive/web dev",
     "typecheck": "pnpm -r --parallel typecheck",
     "test": "vitest run",
     "test:watch": "vitest",

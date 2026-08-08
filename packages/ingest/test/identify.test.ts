@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { duplicateIdentities, identify } from '../src/identify.js';
-import { observation, parseResultOf } from './helpers.js';
+import { duplicateIdentities, identify } from '../src/identify';
+import { observation, parseResultOf } from './helpers';
 
 describe('identify', () => {
   it('computes identity, content and services key per row', () => {

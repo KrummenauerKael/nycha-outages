@@ -2,17 +2,17 @@ import { sql } from 'drizzle-orm';
 import { schema } from '@archive/db';
 import type { Db } from '@archive/db/client';
 import type { FetchedPage, ParseResult } from '@archive/parser';
-import { duplicateIdentities, identify, type DuplicateIdentity } from './identify.js';
-import { persistObservations, type ObservationWriteSummary } from './observations.js';
-import { decideRetention } from './retention.js';
+import { duplicateIdentities, identify, type DuplicateIdentity } from './identify';
+import { persistObservations, type ObservationWriteSummary } from './observations';
+import { decideRetention } from './retention';
 import {
   buildCountRows,
   buildReviewRows,
   buildSnapshotRow,
   buildSummaryRows,
   countsMatch,
-} from './rows.js';
-import type { UploadOutcome } from './storage.js';
+} from './rows';
+import type { UploadOutcome } from './storage';
 
 /**
  * Advisory lock key for a poll. Arbitrary but fixed: 0x6e796368, the ASCII bytes

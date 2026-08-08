@@ -15,7 +15,7 @@ import {
   type Service,
   type SubTable,
   type SummaryCounts,
-} from './types.js';
+} from './types';
 import {
   brLines,
   directRows,
@@ -24,8 +24,8 @@ import {
   norm,
   toHoursOrNull,
   toIntOrNull,
-} from './html.js';
-import { plannedFromMarker, serviceFromIcon } from './icons.js';
+} from './html';
+import { plannedFromMarker, serviceFromIcon } from './icons';
 
 const PREFIX = 'ctl00_ContentPlaceHolder1_';
 

@@ -6,7 +6,7 @@ import {
   contactEmail,
   contactEmailOrNull,
   userAgent,
-} from '../src/index.js';
+} from '../src/index';
 
 const original = process.env[CONTACT_EMAIL_ENV];
 

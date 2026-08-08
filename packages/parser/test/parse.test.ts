@@ -6,7 +6,7 @@ import {
   parseOutagesPage,
   type OutageObservation,
   type ParseResult,
-} from '../src/index.js';
+} from '../src/index';
 
 const FIXTURE = fileURLToPath(
   new URL('./fixtures/outages-2026-08-06T21-21Z.html', import.meta.url),

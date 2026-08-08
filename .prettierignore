@@ -3,4 +3,4 @@ dist
 pnpm-lock.yaml
 packages/parser/test/fixtures
 packages/db/drizzle
-apps/ingest/api
+apps/web/.next

@@ -1,7 +1,7 @@
 import type { schema } from '@archive/db';
 import type { CategorySummary, FetchedPage, ParseResult, SummaryCounts } from '@archive/parser';
-import type { DuplicateIdentity } from './identify.js';
-import type { UploadOutcome } from './storage.js';
+import type { DuplicateIdentity } from './identify';
+import type { UploadOutcome } from './storage';
 
 /**
  * Pure translation from parser output to insertable rows. Kept separate from the

@@ -6,8 +6,8 @@ import {
   buildSnapshotRow,
   buildSummaryRows,
   countsMatch,
-} from '../src/rows.js';
-import type { UploadOutcome } from '../src/storage.js';
+} from '../src/rows';
+import type { UploadOutcome } from '../src/storage';
 
 const page: FetchedPage = {
   url: 'https://my.nycha.info/Outages/Outages.aspx',

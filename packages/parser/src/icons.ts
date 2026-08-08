@@ -1,4 +1,4 @@
-import { ParseError, type Service } from './types.js';
+import { ParseError, type Service } from './types';
 
 /**
  * Icon filename -> service. NYCHA identifies services only by image, so this map

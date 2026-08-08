@@ -1,6 +1,6 @@
 import type { Cheerio, CheerioAPI } from 'cheerio';
 import type { Element } from 'domhandler';
-import { ParseError } from './types.js';
+import { ParseError } from './types';
 
 /** Collapse whitespace and trim. NYCHA's markup is heavily indented. */
 export function norm(text: string | null | undefined): string {

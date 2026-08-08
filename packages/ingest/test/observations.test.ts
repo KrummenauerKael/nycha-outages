@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ABSENT_CONTENT_HASH, schema } from '@archive/db';
-import { identify } from '../src/identify.js';
-import { persistObservations } from '../src/observations.js';
-import { fakeDb, observation, parseResultOf } from './helpers.js';
+import { identify } from '../src/identify';
+import { persistObservations } from '../src/observations';
+import { fakeDb, observation, parseResultOf } from './helpers';
 
 const fetchedAt = new Date('2026-08-07T12:00:00.000Z');
 

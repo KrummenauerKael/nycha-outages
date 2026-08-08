@@ -3,8 +3,17 @@
   "compilerOptions": {
     "target": "es2023",
     "lib": ["es2023"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    /**
+     * Bundler resolution, not nodenext, so relative imports are extensionless.
+     *
+     * Nothing here is ever executed by Node directly — every consumer is tsx,
+     * vitest, drizzle-kit, or Next/Turbopack, and packages export `.ts` source.
+     * The NodeNext `.js`-specifier convention was therefore pure ceremony: it
+     * described a compiled layout that does not exist, and Turbopack refuses to
+     * resolve `./foo.js` to `foo.ts`, which broke the Next build outright.
+     */
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "types": ["node"],
 
     "strict": true,

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 /**
  * Runtime client. Points at the TRANSACTION pooler (port 6543), never the

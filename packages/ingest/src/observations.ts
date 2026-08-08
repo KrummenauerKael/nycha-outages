@@ -1,7 +1,7 @@
 import { desc, inArray, sql } from 'drizzle-orm';
 import { ABSENT_CONTENT_HASH, schema } from '@archive/db';
-import type { IdentifiedObservation } from './identify.js';
-import type { Tx } from './tx.js';
+import type { IdentifiedObservation } from './identify';
+import type { Tx } from './tx';
 
 /**
  * Change-only observation writes.

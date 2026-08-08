@@ -5,8 +5,8 @@ import {
   type FetchedPage,
   type ParseResult,
 } from '@archive/parser';
-import type { DuplicateIdentity } from './identify.js';
-import { persistSnapshot, type PersistedSnapshot } from './persist.js';
+import type { DuplicateIdentity } from './identify';
+import { persistSnapshot, type PersistedSnapshot } from './persist';
 import {
   compressForStorage,
   storageConfigFromEnv,
@@ -14,7 +14,7 @@ import {
   uploadSnapshot,
   type StorageConfig,
   type UploadOutcome,
-} from './storage.js';
+} from './storage';
 
 /**
  * Invariant 3: a count mismatch fails the run.

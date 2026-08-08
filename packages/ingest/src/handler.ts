@@ -1,12 +1,7 @@
 import { createDb } from '@archive/db/client';
-import {
-  DuplicateIdentityError,
-  IngestValidationError,
-  runIngest,
-  type IngestResult,
-} from '@archive/ingest';
-import { checkAuth } from './auth.js';
-import { jsonSafe, redact, type CronRequest, type CronResponse } from './http.js';
+import { DuplicateIdentityError, IngestValidationError, runIngest, type IngestResult } from './run';
+import { checkAuth } from './auth';
+import { jsonSafe, redact, type CronRequest, type CronResponse } from './http';
 
 /**
  * The cron endpoint. One poll per invocation, nothing else.

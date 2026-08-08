@@ -1,5 +1,5 @@
-export * from './types.js';
-export { parseOutagesPage, assertCountsMatch } from './parse.js';
-export { fetchOutagesPage, stripViewState, type FetchedPage } from './fetch.js';
-export { serviceFromIcon, plannedFromMarker } from './icons.js';
-export { isVisible, norm } from './html.js';
+export * from './types';
+export { parseOutagesPage, assertCountsMatch } from './parse';
+export { fetchOutagesPage, stripViewState, type FetchedPage } from './fetch';
+export { serviceFromIcon, plannedFromMarker } from './icons';
+export { isVisible, norm } from './html';

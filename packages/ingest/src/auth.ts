@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
-import type { CronRequest } from './http.js';
+import type { CronRequest } from './http';
 
 /**
  * Shared-secret check for the cron endpoint.

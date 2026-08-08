@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RAW_RETENTION_DAYS, decideRetention } from '../src/retention.js';
+import { RAW_RETENTION_DAYS, decideRetention } from '../src/retention';
 
 const fetchedAt = new Date('2026-08-07T12:00:00.000Z');
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ParseError, parseOutagesPage, type ParseResult } from '../src/index.js';
+import { ParseError, parseOutagesPage, type ParseResult } from '../src/index';
 
 /**
  * These synthetic pages contain only the heat "Current" panel, so the parser

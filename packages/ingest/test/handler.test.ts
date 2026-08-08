@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DuplicateIdentityError, IngestValidationError, type IngestResult } from '@archive/ingest';
-import { handleIngest } from '../src/handler.js';
-import { jsonSafe, redact, type CronRequest, type CronResponse } from '../src/http.js';
+import { DuplicateIdentityError, IngestValidationError, type IngestResult } from '../src/run';
+import { handleIngest } from '../src/handler';
+import { jsonSafe, redact, type CronRequest, type CronResponse } from '../src/http';
 
 const SECRET = 'test-secret';
 const env = { CRON_SECRET: SECRET };

@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { schema } from '@archive/db';
 import type { FetchedPage } from '@archive/parser';
-import { DuplicateIdentityError, IngestValidationError, runIngest } from '../src/run.js';
-import type { UploadOutcome } from '../src/storage.js';
-import { fakeDb, observation, parseResultOf } from './helpers.js';
+import { DuplicateIdentityError, IngestValidationError, runIngest } from '../src/run';
+import type { UploadOutcome } from '../src/storage';
+import { fakeDb, observation, parseResultOf } from './helpers';
 
 /**
  * Reaches into the parser package's fixture on purpose. This is the only place
