@@ -19,16 +19,8 @@ export default function Error({
 }) {
   return (
     <main>
-      <h1>NYCHA service interruption archive</h1>
-      <h2>Something went wrong</h2>
-      <p>
-        This page failed to load. It is a fault on our side, not a statement about whether any
-        building currently has heat, hot water, water, elevators, electricity or gas.
-      </p>
-      <p>
-        The hourly collection that builds this archive runs separately from this page and is
-        unaffected, so no record is being lost while this is broken.
-      </p>
+      <h1>NYCHA service interruptions</h1>
+      <p>This page failed to load. Collection is unaffected.</p>
       <p>
         <button type="button" onClick={reset}>
           Try again

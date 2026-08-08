@@ -75,16 +75,78 @@ export const HEAT_SEASON_END_MONTH = 5;
 
 export type Granularity = 'week' | 'month' | 'year' | 'season';
 
+export type ScopeLevel = 'entire_development' | 'building' | 'sectional' | 'unspecified';
+
 export interface MetricFilter {
   /** Exact match on `development_raw`. Canonical ids arrive with #8. */
   development?: string;
+  borough?: string;
   category?: Category;
   service?: Service;
+  scopeLevel?: ScopeLevel;
+  /**
+   * Planned status is per service, not per outage (invariant 2). Combined with
+   * `service`, both must hold on the *same* service row — otherwise "planned
+   * elevator work" would match an outage that is planned for heat and
+   * unplanned for elevator.
+   *
+   * `null` selects rows NYCHA published no marker for, which is every gas row.
+   */
+  isPlanned?: boolean | null;
+  /** Only outages with no closure recorded — still running as of now. */
+  ongoingOnly?: boolean;
   /** Inclusive lower bound on overlap, not on start. */
   from?: Date;
   /** Exclusive upper bound on overlap. */
   to?: Date;
 }
+
+/**
+ * What to group by. `service` groups through `observation_service`, so an
+ * outage affecting heat and hot water is counted under both — correct, and the
+ * reason the counts under this dimension do not sum to the outage total.
+ */
+export type Dimension = 'development' | 'borough' | 'category' | 'service' | 'scopeLevel';
+
+export type SortField =
+  | 'label'
+  | 'outages'
+  | 'outageHours'
+  | 'residentHours'
+  | 'averageHoursPerOutage'
+  | 'outagesWithoutImpactFigures'
+  | 'ongoingOutages';
+
+export type SortDirection = 'asc' | 'desc';
+
+export interface Sort {
+  field: SortField;
+  direction: SortDirection;
+}
+
+/**
+ * Whitelists. Sort and grouping choices reach SQL as identifiers rather than
+ * bound parameters, so they are mapped through closed unions here and never
+ * interpolated from caller input. A UI can pass whatever a user clicked; an
+ * unrecognised value cannot become SQL.
+ */
+const DIMENSION_SQL: Record<Dimension, string> = {
+  development: 'development_raw',
+  borough: 'borough_raw',
+  category: 'category',
+  service: 'os.service',
+  scopeLevel: 'scope_level',
+};
+
+const SORT_SQL: Record<SortField, string> = {
+  label: '1',
+  outages: 'outages',
+  outageHours: 'outage_hours',
+  residentHours: 'resident_hours',
+  averageHoursPerOutage: 'average_hours_per_outage',
+  outagesWithoutImpactFigures: 'outages_without_impact_figures',
+  ongoingOutages: 'ongoing_outages',
+};
 
 /**
  * Every outage as a single interval with a duration and a provenance label.
@@ -95,13 +157,27 @@ export interface MetricFilter {
 function intervalsCte(filter: MetricFilter): SQL {
   const conditions: SQL[] = [];
   if (filter.development) conditions.push(sql`e.development_raw = ${filter.development}`);
+  if (filter.borough) conditions.push(sql`e.borough_raw = ${filter.borough}`);
   if (filter.category) conditions.push(sql`e.category = ${filter.category}`);
-  if (filter.service) {
-    conditions.push(sql`exists (
-      select 1 from observation_service os
-      where os.observation_id = latest.observation_id and os.service = ${filter.service}
-    )`);
+  if (filter.scopeLevel) conditions.push(sql`e.scope_level = ${filter.scopeLevel}`);
+  if (filter.ongoingOnly) conditions.push(sql`closure.ended_at is null`);
+
+  /**
+   * Service and planned status are tested together in one `exists`, never as
+   * two independent clauses. Invariant 2: the flags are per service, so
+   * "planned elevator work" has to mean one service row that is both, not an
+   * outage that happens to have a planned service and an elevator service.
+   */
+  if (filter.service !== undefined || filter.isPlanned !== undefined) {
+    const inner: SQL[] = [sql`os.observation_id = latest.observation_id`];
+    if (filter.service !== undefined) inner.push(sql`os.service = ${filter.service}`);
+    if (filter.isPlanned === null) inner.push(sql`os.is_planned is null`);
+    else if (filter.isPlanned !== undefined) inner.push(sql`os.is_planned = ${filter.isPlanned}`);
+    conditions.push(
+      sql`exists (select 1 from observation_service os where ${sql.join(inner, sql` and `)})`,
+    );
   }
+
   const where = conditions.length ? sql`where ${sql.join(conditions, sql` and `)}` : sql``;
 
   return sql`
@@ -132,6 +208,7 @@ function intervalsCte(filter: MetricFilter): SQL {
         e.development_raw,
         e.borough_raw,
         e.category,
+        e.scope_level,
         latest.observation_id,
         e.first_seen_at as started_at,
         closure.ended_at is null as is_ongoing,
@@ -201,8 +278,8 @@ function slicesCte(): SQL {
  * `Date` outright. The `::timestamptz` cast is what keeps the comparison a
  * timestamp comparison rather than a string one.
  */
-function windowFilter(filter: MetricFilter): SQL {
-  const parts: SQL[] = [];
+function windowFilter(filter: MetricFilter, ...extra: SQL[]): SQL {
+  const parts: SQL[] = [...extra];
   if (filter.from) parts.push(sql`day >= ${filter.from.toISOString()}::timestamptz`);
   if (filter.to) parts.push(sql`day < ${filter.to.toISOString()}::timestamptz`);
   return parts.length ? sql`where ${sql.join(parts, sql` and `)}` : sql``;
@@ -261,6 +338,8 @@ export async function timeSeries(
   db: Reader,
   granularity: Granularity,
   filter: MetricFilter = {},
+  /** Chronological by default; `desc` puts the most recent period first. */
+  order: SortDirection = 'asc',
 ): Promise<TimeBucket[]> {
   const rows = await db.execute(sql`
     with ${intervalsCte(filter)}, ${slicesCte()}
@@ -277,7 +356,7 @@ export async function timeSeries(
     from slices
     ${windowFilter(filter)}
     group by 1
-    order by 1
+    order by 1 ${sql.raw(order === 'desc' ? 'desc' : 'asc')}
   `);
 
   return (rows as unknown as Record<string, unknown>[]).map((r) => ({
@@ -302,23 +381,67 @@ export interface DevelopmentTotals {
   ongoingOutages: number;
 }
 
+export interface AggregateRow {
+  /** The grouped value: a development name, borough, category, service, scope. */
+  label: string;
+  /** Present when grouping by development; null otherwise. */
+  borough: string | null;
+  outages: number;
+  outageHours: number;
+  residentHours: number;
+  averageHoursPerOutage: number;
+  outagesWithoutImpactFigures: number;
+  ongoingOutages: number;
+}
+
+export interface AggregateOptions {
+  dimension: Dimension;
+  filter?: MetricFilter;
+  sort?: Sort;
+  limit?: number;
+  offset?: number;
+}
+
 /**
- * Per-development totals over a window — the ranking a resident or reporter
- * actually wants: which developments had it worst, and for how long.
+ * Totals grouped by any dimension, sorted by any column.
  *
- * Grouped by raw name until entity resolution (#8) lands. A development NYCHA
- * spells two ways appears twice, which understates both.
+ * This is the general form; `timeSeries` is the same numbers grouped by period
+ * instead. Between them a UI can ask most questions worth asking of this data —
+ * worst developments this season, which borough loses the most resident-hours,
+ * whether elevator outages run longer than heat ones, which scope of outage
+ * dominates — without new SQL each time.
+ *
+ * `dimension` and `sort` are mapped through closed unions rather than
+ * interpolated, so a control that passes through a user's click cannot reach
+ * the database as SQL.
+ *
+ * Grouping by `service` counts an outage once per service it affects, so those
+ * rows do not sum to the outage total. That is the honest shape of the data —
+ * one broken riser really does take out heat and hot water — and flattening it
+ * would mean choosing a single service per outage arbitrarily.
  */
-export async function developmentTotals(
-  db: Reader,
-  filter: MetricFilter = {},
-  limit = 100,
-): Promise<DevelopmentTotals[]> {
+export async function aggregate(db: Reader, options: AggregateOptions): Promise<AggregateRow[]> {
+  const filter = options.filter ?? {};
+  const sort = options.sort ?? { field: 'residentHours', direction: 'desc' };
+  const dimension = sql.raw(DIMENSION_SQL[options.dimension]);
+  const orderBy = sql.raw(`${SORT_SQL[sort.field]} ${sort.direction === 'asc' ? 'asc' : 'desc'}`);
+
+  // Only the service dimension needs the join; adding it unconditionally would
+  // multiply rows and silently inflate every other grouping's hour totals.
+  const serviceJoin =
+    options.dimension === 'service'
+      ? sql`join observation_service os on os.observation_id = slices.observation_id`
+      : sql``;
+
+  // Borough is only meaningful when the group is a place.
+  const boroughColumn =
+    options.dimension === 'development' ? sql`max(borough_raw)` : sql`cast(null as text)`;
+
   const rows = await db.execute(sql`
     with ${intervalsCte(filter)}, ${slicesCte()}
     select
-      development_raw as development,
-      max(borough_raw) as borough,
+      ${dimension} as label,
+      ${boroughColumn} as borough,
       count(distinct event_id)::int as outages,
       round(sum(hours_in_day)::numeric, 2)::float8 as outage_hours,
       round(sum(hours_in_day * residents)::numeric, 2)::float8 as resident_hours,
@@ -328,15 +451,17 @@ export async function developmentTotals(
         as outages_without_impact_figures,
       count(distinct event_id) filter (where is_ongoing)::int as ongoing_outages
     from slices
-    ${windowFilter(filter)}
-    group by development_raw
-    order by resident_hours desc nulls last, outage_hours desc
-    limit ${limit}
+    ${serviceJoin}
+    ${windowFilter(filter, sql`${dimension} is not null`)}
+    group by 1
+    order by ${orderBy} nulls last
+    limit ${options.limit ?? 100}
+    offset ${options.offset ?? 0}
   `);
 
   return (rows as unknown as Record<string, unknown>[]).map((r) => ({
-    development: String(r['development']),
-    borough: r['borough'] === null ? null : String(r['borough']),
+    label: String(r['label']),
+    borough: r['borough'] === null || r['borough'] === undefined ? null : String(r['borough']),
     outages: Number(r['outages']),
     outageHours: Number(r['outage_hours'] ?? 0),
     residentHours: Number(r['resident_hours'] ?? 0),
@@ -344,6 +469,16 @@ export async function developmentTotals(
     outagesWithoutImpactFigures: Number(r['outages_without_impact_figures']),
     ongoingOutages: Number(r['ongoing_outages']),
   }));
+}
+
+/** Per-development totals. Thin wrapper over `aggregate` for the common case. */
+export async function developmentTotals(
+  db: Reader,
+  filter: MetricFilter = {},
+  limit = 100,
+): Promise<DevelopmentTotals[]> {
+  const rows = await aggregate(db, { dimension: 'development', filter, limit });
+  return rows.map(({ label, ...rest }) => ({ development: label, ...rest }));
 }
 
 export interface DurationSourceBreakdown {
@@ -385,4 +520,43 @@ export async function developmentNames(db: Reader): Promise<string[]> {
     select distinct development_raw from outage_event order by development_raw
   `)) as unknown as Record<string, unknown>[];
   return rows.map((r) => String(r['development_raw']));
+}
+
+export interface FilterOptions {
+  developments: string[];
+  boroughs: string[];
+  categories: string[];
+  services: string[];
+  scopeLevels: string[];
+}
+
+/**
+ * Every value a filter control can offer, in one round trip.
+ *
+ * Read from the data rather than from the type unions on purpose: NYCHA is the
+ * source of truth for what actually appears, and offering a filter that returns
+ * nothing — a borough with no outages, a category out of season — is a worse
+ * experience than a shorter list. Heat, for instance, should not be selectable
+ * in August, because it genuinely does not occur.
+ */
+export async function filterOptions(db: Reader): Promise<FilterOptions> {
+  const rows = (await db.execute(sql`
+    select 'development' as kind, development_raw as value from outage_event
+    union select 'borough', borough_raw from outage_event
+    union select 'category', category from outage_event
+    union select 'scopeLevel', scope_level from outage_event
+    union select 'service', os.service from observation_service os
+    order by 1, 2
+  `)) as unknown as Record<string, unknown>[];
+
+  const pick = (kind: string): string[] =>
+    rows.filter((r) => r['kind'] === kind && r['value'] !== null).map((r) => String(r['value']));
+
+  return {
+    developments: pick('development'),
+    boroughs: pick('borough'),
+    categories: pick('category'),
+    services: pick('service'),
+    scopeLevels: pick('scopeLevel'),
+  };
 }

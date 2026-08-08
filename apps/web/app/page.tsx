@@ -92,18 +92,9 @@ export default async function Home({
     logReadFailure(error);
     return (
       <main>
-        <h1>NYCHA service interruption archive</h1>
-        <h2>This page can&rsquo;t load the archive right now</h2>
-        <p>
-          Something on our side is failing, and we would rather show you nothing than show you
-          numbers we cannot stand behind.
-        </p>
-        <p>
-          <strong>This does not mean there are no service interruptions.</strong> It means this page
-          cannot currently read the record. Collection continues in the background either way, so
-          nothing is being lost while this is broken.
-        </p>
-        <p>Please try again in a few minutes.</p>
+        <h1>NYCHA service interruptions</h1>
+        <p>Data unavailable. This is a fault on our side, not a report of zero interruptions.</p>
+        <p>Collection is unaffected. Try again shortly.</p>
       </main>
     );
   }
@@ -117,39 +108,25 @@ export default async function Home({
 
   return (
     <main>
-      <h1>NYCHA service interruption archive</h1>
-      <p>
-        NYCHA publishes which buildings currently have no heat, hot water, water, elevator,
-        electricity or gas — but only right now, with no history. This archive records that page
-        every hour so the question &ldquo;how long did this go on?&rdquo; can be answered at all.
-      </p>
+      <h1>NYCHA service interruptions</h1>
 
       {health.snapshots === 0 ? (
-        <p>
-          <strong>Nothing has been collected yet.</strong> No conclusions can be drawn from this
-          page.
-        </p>
+        <p>No data collected yet.</p>
       ) : (
         <p>
-          Collecting since <time>{health.firstFetchedAt?.toISOString().slice(0, 10)}</time>.{' '}
-          {num(health.snapshots)} hourly readings so far.{' '}
-          <strong>Nothing before that date is covered</strong> — an empty period below means the
-          archive was not yet running, not that nothing was broken.
+          {num(health.snapshots)} hourly readings since{' '}
+          <time>{health.firstFetchedAt?.toISOString().slice(0, 10)}</time>. Earlier periods are not
+          covered.
         </p>
       )}
 
       <section>
-        <h2>Choose what to look at</h2>
-        {/*
-          A plain GET form. No JavaScript required, every result is a shareable
-          URL, and it degrades to something usable on any device or assistive
-          technology. For a civic record that is the correct default.
-        */}
+        <h2>Filter</h2>
         <form method="get">
           <p>
             <label htmlFor="development">Development</label>{' '}
             <select id="development" name="development" defaultValue={selected.development}>
-              <option value="">All developments</option>
+              <option value="">All</option>
               {developments.map((name) => (
                 <option key={name} value={name}>
                   {name}
@@ -159,9 +136,9 @@ export default async function Home({
           </p>
 
           <p>
-            <label htmlFor="category">Kind of interruption</label>{' '}
+            <label htmlFor="category">Category</label>{' '}
             <select id="category" name="category" defaultValue={selected.category}>
-              <option value="">All kinds</option>
+              <option value="">All</option>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
                   {CATEGORY_LABELS[c]}
@@ -171,9 +148,9 @@ export default async function Home({
           </p>
 
           <p>
-            <label htmlFor="service">Specific service</label>{' '}
+            <label htmlFor="service">Service</label>{' '}
             <select id="service" name="service" defaultValue={selected.service}>
-              <option value="">All services</option>
+              <option value="">All</option>
               {SERVICES.map((s) => (
                 <option key={s} value={s}>
                   {SERVICE_LABELS[s]}
@@ -201,62 +178,39 @@ export default async function Home({
           </p>
 
           <p>
-            <button type="submit">Show</button> <a href="/">Reset</a>
+            <button type="submit">Apply</button> <a href="/">Reset</a>
           </p>
         </form>
       </section>
 
       <section>
-        <h2>Totals for this selection</h2>
+        <h2>Totals</h2>
         {distinctOutages === 0 ? (
-          <p>
-            No interruptions recorded for this selection.{' '}
-            {health.snapshots > 0 &&
-              'That may mean the period requested is outside what has been collected so far.'}
-          </p>
+          <p>No interruptions match this filter.</p>
         ) : (
           <>
             <dl>
               <dt>Interruptions</dt>
               <dd>{num(distinctOutages)}</dd>
-              <dt>Total time without service</dt>
+              <dt>Time without service</dt>
               <dd>{hours(totalOutageHours)}</dd>
-              <dt>Resident-hours lost (at least)</dt>
+              <dt>Resident-hours (floor)</dt>
               <dd>{num(totalResidentHours)}</dd>
+              <dt>Duration from NYCHA</dt>
+              <dd>{num(sources.nychaReported)}</dd>
+              <dt>Duration measured here</dt>
+              <dd>{num(sources.observed)}</dd>
+              <dt>Unresolved</dt>
+              <dd>{num(sources.ongoing)}</dd>
             </dl>
-
-            <h3>What &ldquo;resident-hours&rdquo; means</h3>
-            <p>
-              One resident-hour is one person going one hour without the service. A building of 100
-              people with no hot water for 10 hours is 1,000 resident-hours. It is a way of counting
-              that treats a long outage in a large development as bigger than a short one in a small
-              building — which is how residents experience it, and which a simple count of
-              interruptions hides.
-            </p>
-
             {totalWithoutFigures > 0 && (
               <p>
-                <strong>This total is a floor, not a full count.</strong> NYCHA published no
-                resident figures for {num(totalWithoutFigures)} of these interruptions, so they
-                contribute nothing to the number above. The real figure is higher. Gas interruptions
-                never carry impact figures at all.
+                <small>
+                  Floor excludes {num(totalWithoutFigures)} interruptions with no published resident
+                  figures.
+                </small>
               </p>
             )}
-
-            <h3>Where these durations come from</h3>
-            <p>
-              NYCHA states a restoration time for some interruptions and not others. Where it does,
-              that figure is used. Where it does not, the duration is measured from when this
-              archive first saw the interruption until it stopped appearing.
-            </p>
-            <ul>
-              <li>{num(sources.nychaReported)} using NYCHA&rsquo;s own stated restoration time</li>
-              <li>{num(sources.observed)} measured by this archive</li>
-              <li>
-                {num(sources.ongoing)} still unresolved — their durations are counted only up to
-                now, so they will grow
-              </li>
-            </ul>
           </>
         )}
       </section>
@@ -264,21 +218,17 @@ export default async function Home({
       <section>
         <h2>{GRANULARITY_LABELS[granularity]}</h2>
         {series.length === 0 ? (
-          <p>Nothing collected for this period.</p>
+          <p>No data for this period.</p>
         ) : (
           <table>
-            <caption>
-              Interruptions are counted once in every period they were ongoing, so this column
-              cannot be added up. Hours can be.
-            </caption>
             <thead>
               <tr>
                 <th scope="col">Period</th>
                 <th scope="col">Interruptions</th>
-                <th scope="col">Hours without service</th>
-                <th scope="col">Resident-hours (at least)</th>
-                <th scope="col">Average length</th>
-                <th scope="col">Still unresolved</th>
+                <th scope="col">Hours</th>
+                <th scope="col">Resident-hours</th>
+                <th scope="col">Average</th>
+                <th scope="col">Unresolved</th>
               </tr>
             </thead>
             <tbody>
@@ -295,27 +245,28 @@ export default async function Home({
             </tbody>
           </table>
         )}
+        <p>
+          <small>
+            Interruptions appear in every period they span, so the column is not additive.
+          </small>
+        </p>
       </section>
 
       <section>
         <h2>By development</h2>
         {totals.length === 0 ? (
-          <p>Nothing collected for this selection.</p>
+          <p>No interruptions match this filter.</p>
         ) : (
           <table>
-            <caption>
-              Ranked by resident-hours lost. Developments NYCHA spells more than one way currently
-              appear more than once, which understates each of them.
-            </caption>
             <thead>
               <tr>
                 <th scope="col">Development</th>
                 <th scope="col">Borough</th>
                 <th scope="col">Interruptions</th>
-                <th scope="col">Hours without service</th>
-                <th scope="col">Resident-hours (at least)</th>
-                <th scope="col">Average length</th>
-                <th scope="col">No figures published</th>
+                <th scope="col">Hours</th>
+                <th scope="col">Resident-hours</th>
+                <th scope="col">Average</th>
+                <th scope="col">No figures</th>
               </tr>
             </thead>
             <tbody>
@@ -328,7 +279,7 @@ export default async function Home({
                       {row.development}
                     </a>
                   </th>
-                  <td>{row.borough ?? '—'}</td>
+                  <td>{row.borough ?? ''}</td>
                   <td>{num(row.outages)}</td>
                   <td>{hours(row.outageHours)}</td>
                   <td>{num(row.residentHours)}</td>
@@ -339,42 +290,6 @@ export default async function Home({
             </tbody>
           </table>
         )}
-      </section>
-
-      <section>
-        <h2>How to read this honestly</h2>
-        <ul>
-          <li>
-            <strong>Resident-hour totals are floors.</strong> Interruptions without published impact
-            figures contribute zero rather than an estimate. Nothing here is imputed.
-          </li>
-          <li>
-            <strong>Unresolved interruptions are still running.</strong> Their hours are counted
-            only up to now, so those figures increase every hour.
-          </li>
-          <li>
-            <strong>An interruption spanning two periods is split between them</strong> by the hours
-            that actually fell in each, not assigned wholly to the one it started in.
-          </li>
-          <li>
-            <strong>An empty period means no collection, not no interruptions.</strong> This archive
-            began on {health.firstFetchedAt?.toISOString().slice(0, 10) ?? 'a date not yet set'}.
-          </li>
-          <li>
-            <strong>Planned and unplanned work is never combined.</strong> A scheduled shutoff and a
-            broken boiler are different events and counting them together would flatter one and
-            malign the other.
-          </li>
-          {health.countMismatches > 0 && (
-            <li>
-              <strong>
-                {num(health.countMismatches)} readings disagreed with NYCHA&rsquo;s own published
-                row counts
-              </strong>{' '}
-              and are flagged for review rather than quietly accepted.
-            </li>
-          )}
-        </ul>
       </section>
     </main>
   );

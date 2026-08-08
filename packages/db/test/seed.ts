@@ -154,7 +154,14 @@ export class Seeder {
     });
 
     if (opts.service) {
-      await this.service(observationId, opts.service, opts.isPlanned ?? false);
+      /**
+       * Not `?? false`. `null` is a meaningful value here — it is how NYCHA
+       * publishing no planned marker is recorded, and every gas row has it —
+       * and `??` would quietly convert it to `false`, seeding "unplanned" and
+       * making the unmarked case impossible to test.
+       */
+      const isPlanned = opts.isPlanned === undefined ? false : opts.isPlanned;
+      await this.service(observationId, opts.service, isPlanned);
     }
 
     if (opts.endedAt) {
