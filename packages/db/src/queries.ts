@@ -328,8 +328,18 @@ export async function archiveHealth(db: Db): Promise<ArchiveHealth> {
   const [row] = await db
     .select({
       snapshots: sql<number>`count(*)::int`,
-      firstFetchedAt: sql<Date | null>`min(${snapshot.fetchedAt})`,
-      lastFetchedAt: sql<Date | null>`max(${snapshot.fetchedAt})`,
+      /**
+       * `.mapWith` is load-bearing. `sql<Date>` is a type *assertion* and does
+       * nothing at runtime, so an aggregate over a timestamptz arrives as the
+       * driver's raw string while TypeScript insists it is a Date — and
+       * `.toISOString()` on it throws. Passing the column applies its decoder.
+       *
+       * This got through every check: it typechecked, and it rendered fine
+       * against an empty table because the aggregates were null. It broke the
+       * first time a row existed.
+       */
+      firstFetchedAt: sql<Date | null>`min(${snapshot.fetchedAt})`.mapWith(snapshot.fetchedAt),
+      lastFetchedAt: sql<Date | null>`max(${snapshot.fetchedAt})`.mapWith(snapshot.fetchedAt),
       countMismatches: sql<number>`count(*) filter (where ${snapshot.countsMatched} is false)::int`,
       rawRetained: sql<number>`count(*) filter (where ${snapshot.rawDiscardedAt} is null and ${snapshot.storageKey} is not null)::int`,
     })

@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
@@ -18,7 +19,16 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        {/*
+          Web Analytics only — audience, not Speed Insights. Cookieless and
+          with no per-visitor identifier, which is the right posture for a site
+          whose subject is people's living conditions: knowing whether anyone
+          reads this is useful, knowing who they are is not.
+        */}
+        <Analytics />
+      </body>
     </html>
   );
 }
