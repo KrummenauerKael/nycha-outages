@@ -7,7 +7,7 @@ import {
   durationSources,
   timeSeries,
 } from '@archive/db/metrics';
-import { readDb } from '@/db';
+import { withDb } from '@/db';
 import {
   CATEGORY_LABELS,
   GRANULARITIES,
@@ -71,17 +71,23 @@ export default async function Home({
 
   let data;
   try {
-    // readDb throws synchronously on a missing DATABASE_URL, so it stays inside
-    // the try — hoisting it sends that throw past the message below.
-    const db = readDb();
-    const [health, developments, series, totals, sources] = await Promise.all([
-      archiveHealth(db),
-      developmentNames(db),
-      timeSeries(db, granularity, filter),
-      developmentTotals(db, filter, 50),
-      durationSources(db, filter),
-    ]);
-    data = { health, developments, series, totals, sources };
+    /**
+     * One connection, opened and closed inside this request, with the queries
+     * run in series rather than concurrently.
+     *
+     * Concurrency here bought nothing: each query returns in tens of
+     * milliseconds, so five in series is still well under half a second, and a
+     * single connection cannot go stale between them. `withDb` throws
+     * synchronously on a missing DATABASE_URL, which is why the call sits
+     * inside the try rather than above it.
+     */
+    data = await withDb(async (db) => ({
+      health: await archiveHealth(db),
+      developments: await developmentNames(db),
+      series: await timeSeries(db, granularity, filter),
+      totals: await developmentTotals(db, filter, 50),
+      sources: await durationSources(db, filter),
+    }));
   } catch (error) {
     logReadFailure(error);
     return (
