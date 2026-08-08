@@ -5,6 +5,7 @@ import {
   type FetchedPage,
   type ParseResult,
 } from '@archive/parser';
+import type { DuplicateIdentity } from './identify.js';
 import { persistSnapshot, type PersistedSnapshot } from './persist.js';
 import {
   compressForStorage,
@@ -34,13 +35,31 @@ export class IngestValidationError extends Error {
   }
 }
 
+/**
+ * Two rows in one snapshot hashing to the same identity — see
+ * `duplicateIdentities`. Like the count mismatch, thrown after the commit, and
+ * like it, the observation timeline was left untouched.
+ */
+export class DuplicateIdentityError extends Error {
+  override readonly name = 'DuplicateIdentityError';
+
+  constructor(
+    message: string,
+    readonly snapshotId: bigint,
+    readonly duplicates: DuplicateIdentity[],
+  ) {
+    super(message);
+  }
+}
+
 export interface IngestResult extends PersistedSnapshot {
   sha256: string;
   httpStatus: number;
   attempts: number;
   storedBytes: number | null;
   storageKey: string | null;
-  observations: number;
+  /** Rows parsed off the page. `observations` is the write summary, inherited. */
+  parsedRows: number;
   warnings: string[];
 }
 
@@ -48,6 +67,14 @@ export interface IngestDeps {
   db: Db;
   /** Injected in tests. Defaults to the real network fetch. */
   fetchPage?: () => Promise<FetchedPage>;
+  /**
+   * Injected in tests. Defaults to the real parser.
+   *
+   * Exists because some failure modes cannot be reached through a real document —
+   * an identity collision, for one, which the fixture is specifically proven not
+   * to contain.
+   */
+  parse?: (html: string) => ParseResult;
   /** Injected in tests. Defaults to the real Storage upload. */
   upload?: (key: string, page: FetchedPage) => Promise<UploadOutcome>;
   storage?: StorageConfig;
@@ -76,7 +103,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestResult> {
   const { db } = deps;
 
   const page = await (deps.fetchPage ?? (() => fetchOutagesPage()))();
-  const result: ParseResult = parseOutagesPage(page.html);
+  const result: ParseResult = (deps.parse ?? parseOutagesPage)(page.html);
 
   const key = storageKeyFor(page.fetchedAt, page.sha256);
 
@@ -97,7 +124,7 @@ export async function runIngest(deps: IngestDeps): Promise<IngestResult> {
     attempts: page.attempts,
     storedBytes: upload.ok ? upload.bytes : null,
     storageKey: upload.ok ? upload.key : null,
-    observations: result.observations.length,
+    parsedRows: result.observations.length,
     warnings: result.warnings,
   };
 
@@ -105,12 +132,25 @@ export async function runIngest(deps: IngestDeps): Promise<IngestResult> {
     const bad = result.counts.filter((c) => c.declared !== null && c.declared !== c.parsed);
     throw new IngestValidationError(
       `Parsed row count does not match the count NYCHA displays. Snapshot ${persisted.snapshotId} ` +
-        `was committed and its raw body will be kept indefinitely for reparsing. ` +
+        `was committed and its raw body will be kept indefinitely for reparsing. The observation ` +
+        `timeline was NOT written, because a snapshot missing rows would close outages that are ` +
+        `still ongoing. ` +
         bad
           .map((c) => `${c.category}/${c.subTable}: declared ${c.declared}, parsed ${c.parsed}`)
           .join('; '),
       persisted.snapshotId,
       bad,
+    );
+  }
+
+  if (persisted.duplicates.length > 0) {
+    throw new DuplicateIdentityError(
+      `${persisted.duplicates.length} identity collision(s) in one snapshot. Snapshot ` +
+        `${persisted.snapshotId} was committed and the observation timeline was NOT written — ` +
+        `writing it would let one row overwrite another's history. ` +
+        persisted.duplicates.map((d) => d.rows.join(' | ')).join(' ;; '),
+      persisted.snapshotId,
+      persisted.duplicates,
     );
   }
 

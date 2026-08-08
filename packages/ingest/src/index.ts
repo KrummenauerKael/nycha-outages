@@ -16,5 +16,23 @@ export {
   countsMatch,
   type SnapshotRowInput,
 } from './rows.js';
+export {
+  duplicateIdentities,
+  identify,
+  type DuplicateIdentity,
+  type IdentifiedObservation,
+} from './identify.js';
+export {
+  persistObservations,
+  type ObservationWriteInput,
+  type ObservationWriteSummary,
+} from './observations.js';
 export { persistSnapshot, type PersistInput, type PersistedSnapshot } from './persist.js';
-export { IngestValidationError, runIngest, type IngestDeps, type IngestResult } from './run.js';
+export type { Tx } from './tx.js';
+export {
+  DuplicateIdentityError,
+  IngestValidationError,
+  runIngest,
+  type IngestDeps,
+  type IngestResult,
+} from './run.js';

@@ -1,5 +1,6 @@
 import type { schema } from '@archive/db';
 import type { CategorySummary, FetchedPage, ParseResult, SummaryCounts } from '@archive/parser';
+import type { DuplicateIdentity } from './identify.js';
 import type { UploadOutcome } from './storage.js';
 
 /**
@@ -106,8 +107,19 @@ export function buildReviewRows(
   result: ParseResult,
   upload: UploadOutcome,
   countsMatched: boolean,
+  duplicates: DuplicateIdentity[] = [],
 ): ReviewQueueInsert[] {
   const rows: ReviewQueueInsert[] = [];
+
+  // Listed first: it is the only one of these that suppresses the observation
+  // writes entirely, so it is what a human should read first.
+  for (const duplicate of duplicates) {
+    rows.push({
+      snapshotId,
+      reason: 'duplicate_identity',
+      detail: `${duplicate.identity.slice(0, 12)}… shared by ${duplicate.rows.join(' | ')}`,
+    });
+  }
 
   if (!countsMatched) {
     const bad = result.counts.filter((c) => c.declared !== null && c.declared !== c.parsed);

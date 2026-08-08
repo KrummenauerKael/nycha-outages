@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { schema } from '@archive/db';
 import type { FetchedPage } from '@archive/parser';
-import { IngestValidationError, runIngest } from '../src/run.js';
+import { DuplicateIdentityError, IngestValidationError, runIngest } from '../src/run.js';
 import type { UploadOutcome } from '../src/storage.js';
-import { fakeDb } from './helpers.js';
+import { fakeDb, observation, parseResultOf } from './helpers.js';
 
 /**
  * Reaches into the parser package's fixture on purpose. This is the only place
@@ -45,7 +45,7 @@ describe('runIngest, against the real fixture', () => {
 
     expect(result.countsMatched).toBe(true);
     expect(result.snapshotId).toBe(42n);
-    expect(result.observations).toBeGreaterThan(200);
+    expect(result.parsedRows).toBeGreaterThan(200);
     expect(result.countRows).toBeGreaterThan(0);
     expect(result.summaryRows).toBeGreaterThan(0);
     expect(result.reviewCount).toBe(0);
@@ -98,6 +98,32 @@ describe('runIngest, count mismatch', () => {
    * part that survives, which is exactly the shape of a silent parser regression.
    */
   const truncated = html.slice(0, Math.floor(html.length * 0.6));
+
+  /**
+   * The single most destructive thing this codebase could do.
+   *
+   * Absence is recorded by subtracting the identities in this snapshot from the
+   * set of open events. A snapshot that lost rows would therefore close hundreds
+   * of outages that are still ongoing — and a wrongly recorded end time is
+   * indistinguishable from a real one afterwards. The count check is precisely
+   * the signal that rows were lost, so it has to suppress the timeline write.
+   */
+  it('does NOT touch the observation timeline', async () => {
+    const fake = fakeDb();
+
+    await expect(
+      runIngest({
+        db: fake.db,
+        fetchPage: async () => page({ html: truncated }),
+        upload: async () => uploaded,
+      }),
+    ).rejects.toThrow(IngestValidationError);
+
+    expect(fake.rowsFor(schema.outageEvent)).toEqual([]);
+    expect(fake.rowsFor(schema.outageObservation)).toEqual([]);
+    expect(fake.rowsFor(schema.observationService)).toEqual([]);
+    expect(fake.rowsFor(schema.observationChild)).toEqual([]);
+  });
 
   it('commits the snapshot BEFORE it throws', async () => {
     const fake = fakeDb(7n);
@@ -160,6 +186,79 @@ describe('runIngest, count mismatch', () => {
         expect((error as IngestValidationError).detail.length).toBeGreaterThan(0);
       },
     );
+  });
+});
+
+describe('runIngest, duplicate identity', () => {
+  // Two rows differing only by position hash to one identity, so writing them
+  // would let one overwrite the other's timeline. Same treatment as a count
+  // mismatch: record the snapshot, leave the timeline alone, then fail.
+  const collidingPage = page({ html: '<html></html>' });
+
+  function collidingRun(fake: ReturnType<typeof fakeDb>) {
+    const result = parseResultOf([observation({ rowIndex: 0 }), observation({ rowIndex: 1 })]);
+
+    return runIngest({
+      db: fake.db,
+      fetchPage: async () => collidingPage,
+      upload: async () => uploaded,
+      // The fixture cannot produce a collision, so the parse is supplied directly.
+      parse: () => result,
+    });
+  }
+
+  it('commits the snapshot and skips the timeline, then throws', async () => {
+    const fake = fakeDb(11n);
+
+    await expect(collidingRun(fake)).rejects.toThrow(DuplicateIdentityError);
+
+    expect(fake.committed()).toBe(true);
+    expect(fake.rowsFor(schema.snapshot)).toHaveLength(1);
+    expect(fake.rowsFor(schema.outageEvent)).toEqual([]);
+    expect(fake.rowsFor(schema.outageObservation)).toEqual([]);
+  });
+
+  it('queues the collision and keeps the snapshot for reparsing', async () => {
+    const fake = fakeDb();
+
+    await expect(collidingRun(fake)).rejects.toThrow(DuplicateIdentityError);
+
+    const queued = fake.rowsFor(schema.reviewQueue);
+    expect(queued[0]?.['reason']).toBe('duplicate_identity');
+    expect(fake.rowsFor(schema.snapshot)[0]?.['retainUntil']).toBeNull();
+  });
+
+  it('carries the colliding rows on the error', async () => {
+    const fake = fakeDb(11n);
+
+    await collidingRun(fake).then(
+      () => expect.unreachable('should have thrown'),
+      (error: unknown) => {
+        expect(error).toBeInstanceOf(DuplicateIdentityError);
+        const duplicates = (error as DuplicateIdentityError).duplicates;
+        expect(duplicates).toHaveLength(1);
+        expect(duplicates[0]?.rows).toHaveLength(2);
+      },
+    );
+  });
+});
+
+describe('runIngest, writes the timeline on a healthy snapshot', () => {
+  it('inserts events, versions and service rows from the real fixture', async () => {
+    const fake = fakeDb();
+
+    const result = await runIngest({
+      db: fake.db,
+      fetchPage: async () => page(),
+      upload: async () => uploaded,
+    });
+
+    expect(result.observations).not.toBeNull();
+    expect(result.observations?.eventsInserted).toBe(result.parsedRows);
+    expect(result.observations?.versionsInserted).toBe(result.parsedRows);
+    expect(result.observations?.serviceRows).toBeGreaterThan(0);
+    expect(result.observations?.absencesRecorded).toBe(0);
+    expect(fake.rowsFor(schema.outageEvent)).toHaveLength(result.parsedRows);
   });
 });
 
