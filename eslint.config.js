@@ -2,7 +2,16 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/dist/**', '**/.vercel/**', '**/test/fixtures/**'] },
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/.vercel/**',
+      '**/test/fixtures/**',
+      // Generated bundle, not authored source. See apps/ingest/src/entry.ts.
+      'apps/ingest/api/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
