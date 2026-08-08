@@ -65,9 +65,31 @@ export async function handleIngest(
    * the cron log to say the deploy was misconfigured rather than NYCHA being
    * down. That is precisely the ambiguity invariant 7 exists to prevent.
    */
+  /**
+   * Read and checked before `createDb` is called, never handed to it as a
+   * possibly-undefined argument.
+   *
+   * `createDb(connectionString = process.env['DATABASE_URL'])` has a default
+   * parameter, and a default parameter fires on `undefined`. So
+   * `createDb(env['DATABASE_URL'])` with an injected env that lacks the key
+   * does not fail — it silently falls back to the ambient environment. A test
+   * that believed it was isolated opened a connection to the live archive and
+   * ran a real poll against NYCHA. Injected configuration has to be
+   * authoritative, or injecting it proves nothing.
+   */
+  const databaseUrl = env['DATABASE_URL'];
+  if (!databaseUrl) {
+    res.status(503).json({
+      ok: false,
+      error: 'database_not_configured',
+      message: 'DATABASE_URL is not set.',
+    });
+    return;
+  }
+
   let connection: ReturnType<typeof createDb>;
   try {
-    connection = createDb(env['DATABASE_URL']);
+    connection = createDb(databaseUrl);
   } catch (error) {
     res.status(503).json({
       ok: false,

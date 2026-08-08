@@ -1,6 +1,6 @@
 import type { Category, ImpactSource, ScopeLevel, Service, SubTable } from '@archive/parser';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { Db } from './client';
+import type { Reader } from './client';
 import { observationService, outageEvent, outageObservation, snapshot } from './schema';
 
 /**
@@ -34,7 +34,7 @@ import { observationService, outageEvent, outageObservation, snapshot } from './
  */
 
 /** The most recent version of each event, by insertion order within the event. */
-function latestObservation(db: Db) {
+function latestObservation(db: Reader) {
   return db.$with('latest_observation').as(
     db
       .select({
@@ -104,7 +104,7 @@ export interface CurrentOutageFilter {
  * could mistake for row-level state.
  */
 export async function currentOutages(
-  db: Db,
+  db: Reader,
   filter: CurrentOutageFilter = {},
 ): Promise<CurrentOutage[]> {
   const latest = latestObservation(db);
@@ -155,7 +155,10 @@ export async function currentOutages(
 }
 
 /** Per-service flags for a set of observations, keyed by observation id. */
-async function servicesFor(db: Db, observationIds: bigint[]): Promise<Map<bigint, ServiceFlags[]>> {
+async function servicesFor(
+  db: Reader,
+  observationIds: bigint[],
+): Promise<Map<bigint, ServiceFlags[]>> {
   const rows = await db
     .select({
       observationId: observationService.observationId,
@@ -195,7 +198,7 @@ export interface ServiceBreakdown {
  * counts once under each. Summing this column would double count, which is why
  * there is no total here for a caller to reach for by accident.
  */
-export async function currentCountsByService(db: Db): Promise<ServiceBreakdown[]> {
+export async function currentCountsByService(db: Reader): Promise<ServiceBreakdown[]> {
   const latest = latestObservation(db);
 
   const rows = await db
@@ -235,7 +238,10 @@ export interface DevelopmentLoad {
  * legitimately appear as several events (see the note on `outage_event`), and
  * collapsing them here would need the entity resolution that is deliverable 8.
  */
-export async function currentLoadByDevelopment(db: Db, limit = 100): Promise<DevelopmentLoad[]> {
+export async function currentLoadByDevelopment(
+  db: Reader,
+  limit = 100,
+): Promise<DevelopmentLoad[]> {
   const latest = latestObservation(db);
 
   return db
@@ -277,7 +283,7 @@ export interface TimelineVersion {
  * they said it, and when they stopped saying it. A final entry with
  * `isPresent: false` is the outage ending; its absence means still open.
  */
-export async function eventTimeline(db: Db, eventId: bigint): Promise<TimelineVersion[]> {
+export async function eventTimeline(db: Reader, eventId: bigint): Promise<TimelineVersion[]> {
   const rows = await db
     .select({
       observationId: outageObservation.id,
@@ -324,7 +330,7 @@ export interface ArchiveHealth {
  * `lastFetchedAt` drifting past an hour means collection has stopped, and that
  * is the single most important thing this application can tell anyone.
  */
-export async function archiveHealth(db: Db): Promise<ArchiveHealth> {
+export async function archiveHealth(db: Reader): Promise<ArchiveHealth> {
   const [row] = await db
     .select({
       snapshots: sql<number>`count(*)::int`,

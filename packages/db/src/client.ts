@@ -51,3 +51,15 @@ export function createDb(connectionString = process.env['DATABASE_URL'], options
 }
 
 export type Db = ReturnType<typeof createDb>['db'];
+
+/** The handle drizzle passes to a `db.transaction` callback. */
+export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+/**
+ * Anything that can run a read: the client itself, or a transaction.
+ *
+ * Read queries accept this rather than `Db` specifically so the integration
+ * tests can seed fixtures and query them inside a transaction that is always
+ * rolled back — real Postgres and the real driver, with nothing left behind.
+ */
+export type Reader = Db | Tx;

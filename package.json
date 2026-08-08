@@ -13,6 +13,7 @@
     "dev": "pnpm --filter @archive/web dev",
     "typecheck": "pnpm -r --parallel typecheck",
     "test": "vitest run",
+    "test:integration": "node --env-file=.env.local scripts/test-integration.mjs",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
