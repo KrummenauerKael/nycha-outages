@@ -54,7 +54,30 @@ export async function handleIngest(
     return;
   }
 
-  const { db, client } = createDb(env['DATABASE_URL']);
+  /**
+   * Connecting is configuration, not work, so its failure is reported the same
+   * way a missing secret is: 503, named, and distinct from an ingest that ran
+   * and failed.
+   *
+   * This is inside a try because `createDb` throws synchronously on a missing
+   * `DATABASE_URL`. Left uncaught it escaped the route entirely and the caller
+   * received a 500 with an empty body — no error name, no message, nothing in
+   * the cron log to say the deploy was misconfigured rather than NYCHA being
+   * down. That is precisely the ambiguity invariant 7 exists to prevent.
+   */
+  let connection: ReturnType<typeof createDb>;
+  try {
+    connection = createDb(env['DATABASE_URL']);
+  } catch (error) {
+    res.status(503).json({
+      ok: false,
+      error: 'database_not_configured',
+      message: redact(error instanceof Error ? error.message : String(error)),
+    });
+    return;
+  }
+
+  const { db, client } = connection;
   try {
     await respond(res, () => runIngest({ db }));
   } finally {

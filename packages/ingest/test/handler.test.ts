@@ -78,6 +78,24 @@ describe('handleIngest, authorization', () => {
     expect(captured.body).toMatchObject({ error: 'cron_secret_not_configured' });
   });
 
+  /**
+   * Regression. `createDb` throws synchronously on a missing DATABASE_URL, and
+   * that throw used to escape the handler entirely: the caller got a 500 with an
+   * empty body, so a misconfigured deploy was indistinguishable in the cron log
+   * from NYCHA being unreachable.
+   *
+   * No `ingest` stub here on purpose — supplying one short-circuits before the
+   * connection is ever opened, which is exactly what would hide the bug.
+   */
+  it('503s a missing DATABASE_URL with a named error, not an empty 500', async () => {
+    const { res, captured } = capture();
+
+    await handleIngest(authorized, res, { env: { CRON_SECRET: SECRET } });
+
+    expect(captured.code).toBe(503);
+    expect(captured.body).toMatchObject({ ok: false, error: 'database_not_configured' });
+  });
+
   it('405s an unexpected method', async () => {
     const { res, captured } = capture();
 

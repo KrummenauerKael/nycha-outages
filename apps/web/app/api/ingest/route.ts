@@ -1,4 +1,4 @@
-import { handleIngest, type CronRequest, type CronResponse } from '@archive/ingest';
+import { handleIngest, redact, type CronRequest, type CronResponse } from '@archive/ingest';
 
 /**
  * The hourly cron endpoint.
@@ -57,7 +57,24 @@ async function invoke(request: Request): Promise<Response> {
     },
   };
 
-  await handleIngest(req, res);
+  /**
+   * Backstop. The handler is written to convert every failure into a status and
+   * a body, but if anything ever escapes it, Next would return a 500 with an
+   * empty body — a cron log entry that says only "it broke". Something
+   * unexpected is exactly when the message matters most.
+   */
+  try {
+    await handleIngest(req, res);
+  } catch (error) {
+    return Response.json(
+      {
+        ok: false,
+        error: 'unhandled',
+        message: redact(error instanceof Error ? error.message : String(error)),
+      },
+      { status: 500 },
+    );
+  }
 
   // Ids are already strings by here: `jsonSafe` runs inside the handler because
   // every id in the schema is a bigint and `JSON.stringify` throws on those.
