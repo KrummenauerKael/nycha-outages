@@ -19,7 +19,8 @@
     "scan:secrets:history": "node scripts/scan-secrets.mjs --history",
     "db:generate": "pnpm --filter @archive/db generate",
     "db:migrate": "pnpm --filter @archive/db migrate",
-    "reparse": "tsx scripts/reparse.ts"
+    "reparse": "tsx scripts/reparse.ts",
+    "ingest:once": "tsx scripts/ingest-once.ts"
   },
   "devDependencies": {
     "@archive/config": "workspace:*",

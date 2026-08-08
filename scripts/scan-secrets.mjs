@@ -101,6 +101,14 @@ const PLACEHOLDER = [
   /^(?:changeme|placeholder|redacted|example|dummy|fake|sample|todo|unset|null|none|secret|password|pass|pwd|token|key)$/i,
   /^[A-Z][A-Z0-9_]{2,}$/, // PROJECT_REF, PASSWORD, YOUR_KEY_HERE
   /^\$\{?[A-Za-z_]/, // ${VAR} / $VAR interpolation
+  // GitHub Actions expressions: `SECRET: ${{ secrets.CRON_SECRET }}` is how a
+  // workflow is SUPPOSED to reference a secret. Without this every correctly
+  // written workflow trips the assigned-secret rule.
+  /^\$\{\{/,
+  // Values self-evidently fixtures. Prefixed rather than exact so a test can name
+  // what it is testing — `test-secret`, `fake-token` — instead of being forced to
+  // the bare word "placeholder" and losing the reason it exists.
+  /^(?:test|fake|dummy|sample|example|placeholder|redacted|invalid)[-_]/i,
 ];
 
 /** `scheme://user:password@host` — the only part worth judging is the password. */

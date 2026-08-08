@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { schema } from '@archive/db';
 import type { Db } from '@archive/db/client';
 import type { FetchedPage, ParseResult } from '@archive/parser';
@@ -12,6 +13,13 @@ import {
   countsMatch,
 } from './rows.js';
 import type { UploadOutcome } from './storage.js';
+
+/**
+ * Advisory lock key for a poll. Arbitrary but fixed: 0x6e796368, the ASCII bytes
+ * of "nych". Any other process taking this key would deadline-serialise against
+ * ingest, so it is not reused anywhere else.
+ */
+const INGEST_LOCK_KEY = 0x6e796368;
 
 export interface PersistInput {
   page: FetchedPage;
@@ -75,6 +83,20 @@ export async function persistSnapshot(db: Db, input: PersistInput): Promise<Pers
   });
 
   return db.transaction(async (tx) => {
+    /**
+     * Serialise concurrent polls.
+     *
+     * The Vercel cron and the Actions backstop are half an hour apart, but a
+     * delayed schedule, a manual re-run, or a retry can overlap them. Two runs
+     * that both read the open-event set before either commits would each write a
+     * closing version for the same events. Waiting here means the second run sees
+     * the first's committed state, in which those events are no longer open.
+     *
+     * Transaction-scoped, so it is released by commit or rollback with nothing to
+     * clean up if the function is frozen mid-run.
+     */
+    await tx.execute(sql`select pg_advisory_xact_lock(${INGEST_LOCK_KEY})`);
+
     const [inserted] = await tx
       .insert(schema.snapshot)
       .values(buildSnapshotRow({ page, result, upload, countsMatched, retainUntil }))

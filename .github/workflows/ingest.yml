@@ -1,0 +1,71 @@
+name: ingest
+
+# Backstop for the Vercel cron, offset half an hour from it.
+#
+# Two operational facts about GitHub's scheduler that matter for a season-long
+# archive:
+#
+#   1. Scheduled runs are queued, not guaranteed on time. Delays of several
+#      minutes are normal and longer ones happen at popular times like :00. The
+#      offset to :30 is partly to avoid that peak.
+#   2. GitHub DISABLES scheduled workflows in a repository with no commits for
+#      60 consecutive days, and only emails the owner. A quiet December would
+#      silently stop collection. Either commit something monthly or re-enable it
+#      from the Actions tab; the ROADMAP records this.
+on:
+  schedule:
+    - cron: '30 * * * *'
+  workflow_dispatch:
+
+# Nothing here needs repository scope: the job makes one outbound HTTPS request.
+permissions: {}
+
+# Never let two polls overlap. The ingest itself takes a transaction-level
+# advisory lock, so an overlap would be safe rather than corrupting, but a queued
+# duplicate would still poll NYCHA a second time for nothing.
+concurrency:
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger the ingest endpoint
+        env:
+          # Repository variable, not a secret — it is a public deployment URL.
+          INGEST_URL: ${{ vars.INGEST_URL }}
+          # Must match CRON_SECRET in the Vercel project exactly.
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${INGEST_URL}" ]; then
+            echo "::error::Repository variable INGEST_URL is not set."
+            exit 1
+          fi
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::Repository secret CRON_SECRET is not set."
+            exit 1
+          fi
+
+          # Secret passed via a header from the environment, never on the command
+          # line, so it cannot land in a process listing or the run log.
+          status=$(curl --silent --show-error \
+            --max-time 120 \
+            --retry 2 --retry-delay 5 --retry-connrefused \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            --output response.json \
+            --write-out '%{http_code}' \
+            "${INGEST_URL}")
+
+          echo "HTTP ${status}"
+          # The response carries snapshot ids and row counts, never credentials.
+          cat response.json || true
+          echo
+
+          if [ "${status}" != "200" ]; then
+            echo "::error::Ingest returned HTTP ${status}"
+            exit 1
+          fi
