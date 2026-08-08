@@ -30,6 +30,22 @@ coverage/
 # Local scratch output from scripts/ (fetched pages, reparse dumps)
 tmp/
 
-# Personal Claude Code settings — local only, never committed.
-.claude/settings.local.json
-.claude/settings.json
+# Personal Claude Code state — the whole directory, local only.
+.claude/
+
+# Record keeping is local-only. This repo is public, so markdown is ignored by
+# DEFAULT and published documents are opted in below, one at a time. Planning,
+# working notes, agent instructions, and internal security detail never leave
+# the workstation.
+#
+# Adding a doc meant for readers? Add an exception here in the same commit —
+# `git add -f` would sneak it past this rule and past review.
+*.md
+!README.md
+!docs/**/*.md
+!LICENSE.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+
+notes/
+scratch/
