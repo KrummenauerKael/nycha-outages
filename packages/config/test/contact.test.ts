@@ -82,7 +82,9 @@ describe('contactEmail', () => {
   it('names the env var and the docs in the failure message', () => {
     setContact(undefined);
     expect(() => contactEmail()).toThrow(/ARCHIVE_CONTACT_EMAIL/);
-    expect(() => contactEmail()).toThrow(/SECURITY\.md/);
+    // Points at a file that ships in the repo. SECURITY.md used to be named
+    // here, but it is no longer published, so it cannot help a reader.
+    expect(() => contactEmail()).toThrow(/\.env\.example/);
   });
 });
 

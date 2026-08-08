@@ -2,7 +2,9 @@
 # Installed by `pnpm install` (the "prepare" script points core.hooksPath here).
 # Install by hand with: git config core.hooksPath .githooks
 #
-# Blocks a commit that carries credentials. The repo is public; see SECURITY.md.
+# Blocks a commit that carries credentials. The repo is public, so a hit that
+# gets through is published permanently — rotate at the provider, do not just
+# amend the commit away.
 # Bypass with `git commit --no-verify` only when you have looked at the finding
 # and know it is a false positive.
 

@@ -13,7 +13,7 @@ export function createDb(connectionString = process.env['DATABASE_URL']) {
   if (!connectionString) {
     throw new Error(
       'DATABASE_URL is not set. It must point at the Supabase transaction pooler ' +
-        '(port 6543). See .env.example and SECURITY.md.',
+        '(port 6543). See .env.example for the required names.',
     );
   }
 

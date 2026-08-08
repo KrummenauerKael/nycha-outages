@@ -27,7 +27,7 @@ export class MissingContactEmailError extends Error {
   constructor(reason: string) {
     super(
       `${reason} Set ${CONTACT_EMAIL_ENV} to a monitored address before running the fetcher. ` +
-        'It is intentionally not committed: see .env.example and SECURITY.md.',
+        'It is intentionally not committed: see .env.example for the required names.',
     );
   }
 }

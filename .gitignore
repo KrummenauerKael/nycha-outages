@@ -2,8 +2,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Secrets — never commit. See .env.example for the required names and
-# SECURITY.md for what to do if one lands in a commit anyway.
+# Secrets — never commit. See .env.example for the required names. If one lands
+# in a commit anyway, rotate it at the provider first; the tree is public and a
+# force-push does not unpublish anything.
 .env
 .env.*
 !.env.example

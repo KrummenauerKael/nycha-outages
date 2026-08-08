@@ -36,7 +36,7 @@ import {
  *   of a label. A CHECK built from today's values would fail on real data.
  * - Closed vocabularies are TEXT + CHECK rather than native enums. Adding a
  *   member to a Postgres enum needs ALTER TYPE and can never be removed, and
- *   CLAUDE.md is explicit that NYCHA will change their markup mid-season. A
+ *   NYCHA is expected to change their markup mid-season. A
  *   CHECK is a plain drop-and-recreate. Compile-time safety is preserved with
  *   `$type`, and the allowed values are imported from the parser's own
  *   constants so the two cannot drift apart.

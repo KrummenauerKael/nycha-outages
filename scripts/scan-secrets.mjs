@@ -269,8 +269,8 @@ function main() {
     const where = f.line > 0 ? `${f.path}:${f.line}` : f.path;
     console.error(`  ${where}\n    ${f.rule} — ${f.why}\n    match: ${f.excerpt}\n`);
   }
-  console.error('Nothing was committed. If a credential is real, rotate it before anything else');
-  console.error('(SECURITY.md has the order). If this is a false positive, add the marker');
+  console.error('Nothing was committed. If a credential is real, rotate it at the provider before');
+  console.error('anything else. If this is a false positive, add the marker');
   console.error(`\`${ALLOW_MARKER}\` to that line and explain why in the commit message.\n`);
   process.exit(1);
 }
